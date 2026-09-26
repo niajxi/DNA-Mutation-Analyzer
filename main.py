@@ -72,7 +72,7 @@ def compare_proteins(reference, mutated):
             position = index + 1
             print(f"Protein change at position {position}: {amino_acid} -> {mutated_amino_acid}")
 
-#analyze mutation
+# analyze mutations
 def analyze_mutations(reference, mutated):
     mutations = find_mutations(reference, mutated)
 
@@ -84,22 +84,28 @@ def analyze_mutations(reference, mutated):
     print("\nMUTATION REPORT")
     print("=" * 40)
 
-    for position, reference_nucleotide, mutated_nucleotide in mutations:
-        # convert biological position back to Python index
-        index = position - 1
+    reported_codons = set()
 
-        # find the beginning of the codon containing the mutation
+    for position, reference_nucleotide, mutated_nucleotide in mutations:
+        index = position - 1
+        codon_number = (index // 3) + 1
         codon_start = (index // 3) * 3
+
+        # skip this codon if we already analyzed it
+        if codon_number in reported_codons:
+            continue
+
+        reported_codons.add(codon_number)
 
         # get the reference and mutated codons
         reference_codon = reference[codon_start:codon_start + 3]
         mutated_codon = mutated[codon_start:codon_start + 3]
 
-        # translate each codon into its amino acid
+        # translate the codons
         reference_amino_acid = codon_table[reference_codon]
         mutated_amino_acid = codon_table[mutated_codon]
 
-        # classify the mutation
+        # classify the protein consequence
         if mutated_amino_acid == "*":
             classification = "nonsense"
         elif reference_amino_acid == mutated_amino_acid:
@@ -107,9 +113,31 @@ def analyze_mutations(reference, mutated):
         else:
             classification = "missense"
 
+        # find ALL nucleotide mutations belonging to this codon
+        codon_mutations = []
+
+        for mutation_position, ref_nucleotide, mut_nucleotide in mutations:
+            mutation_index = mutation_position - 1
+            mutation_codon_number = (mutation_index // 3) + 1
+
+            if mutation_codon_number == codon_number:
+                codon_mutations.append(
+                    (mutation_position, ref_nucleotide, mut_nucleotide)
+                )
+
+        # make readable lists for the report
+        positions = []
+        nucleotide_changes = []
+
+        for mutation_position, ref_nucleotide, mut_nucleotide in codon_mutations:
+            positions.append(str(mutation_position))
+            nucleotide_changes.append(
+                f"{ref_nucleotide} -> {mut_nucleotide}"
+            )
+
         # print the mutation report
-        print(f"\nDNA position: {position}")
-        print(f"Nucleotide change: {reference_nucleotide} -> {mutated_nucleotide}")
+        print(f"\nDNA position(s): {', '.join(positions)}")
+        print(f"Nucleotide change(s): {', '.join(nucleotide_changes)}")
         print(f"Codon change: {reference_codon} -> {mutated_codon}")
         print(f"Amino acid change: {reference_amino_acid} -> {mutated_amino_acid}")
         print(f"Classification: {classification.upper()}")
