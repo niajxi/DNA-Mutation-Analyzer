@@ -72,6 +72,64 @@ def compare_proteins(reference, mutated):
             position = index + 1
             print(f"Protein change at position {position}: {amino_acid} -> {mutated_amino_acid}")
 
+
+#length change
+def classify_length_change(reference, mutated):
+    length_difference = len(mutated) - len(reference)
+
+    if length_difference == 0:
+        return "same length"
+    elif length_difference % 3 == 0:
+        return "in-frame indel"
+    else:
+        return "frameshift"
+
+
+#finding the first mismatch to see where indel begins
+def find_first_difference(reference, mutated):
+    shortest_length = min(len(reference), len(mutated))
+
+    for index in range(shortest_length):
+        if reference[index] != mutated[index]:
+            return index
+
+    return shortest_length
+
+#distinguishing insertion vs deletion
+def classify_indel(reference, mutated):
+    if len(mutated) > len(reference):
+        return "insertion"
+    elif len(mutated) < len(reference):
+        return "deletion"
+    else:
+        return "no indel"
+
+#analyzing indel
+def analyze_indel(reference, mutated):
+    indel_type = classify_indel(reference, mutated)
+    indel_index = find_first_difference(reference, mutated)
+    position = indel_index + 1
+
+    length_difference = abs(len(mutated) - len(reference))
+    frame_effect = classify_length_change(reference, mutated)
+
+    if indel_type == "insertion":
+        changed_sequence = mutated[indel_index:indel_index + length_difference]
+    else:
+        changed_sequence = reference[indel_index:indel_index + length_difference]
+
+    print("\nINDEL REPORT")
+    print("=" * 40)
+    print(f"Type: {indel_type.upper()}")
+    print(f"Position: {position}")
+    print(f"Length change: {length_difference} nucleotide(s)")
+    print(f"Reading frame effect: {frame_effect.upper()}")
+    if indel_type == "insertion":
+        print(f"Inserted nucleotide(s): {changed_sequence}")
+    else:
+        print(f"Deleted nucleotide(s): {changed_sequence}")
+
+
 # analyze mutations
 def analyze_mutations(reference, mutated):
     mutations = find_mutations(reference, mutated)
@@ -148,7 +206,7 @@ if not is_valid_dna(reference_dna):
 elif not is_valid_dna(mutated_dna):
     print("Error: Mutated sequence contains invalid nucleotides.")
 elif len(reference_dna) != len(mutated_dna):
-    print("Error: Sequences must be the same length.")
+    analyze_indel(reference_dna, mutated_dna)
 elif len(reference_dna) % 3 != 0:
     print("Error: DNA sequence length must be divisible by 3.")
 else:
