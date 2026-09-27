@@ -1,7 +1,3 @@
-#variable creation
-reference_dna = input("Enter reference DNA sequence: ").upper()
-mutated_dna = input("Enter mutated DNA sequence: ").upper()
-
 #valid dna sequence containing A, T, C and G only
 def is_valid_dna(sequence):
     valid_nucleotides = {"A", "T", "G", "C"}
@@ -62,16 +58,6 @@ def translate_dna(dna):
         amino_acid = codon_table[codon]
         protein = protein + amino_acid
     return protein
-
-#classify types of mutations
-def compare_proteins(reference, mutated):
-    for index, amino_acid in enumerate(reference):
-        mutated_amino_acid = mutated[index]
-
-        if amino_acid != mutated_amino_acid:
-            position = index + 1
-            print(f"Protein change at position {position}: {amino_acid} -> {mutated_amino_acid}")
-
 
 #length change
 def classify_length_change(reference, mutated):
@@ -201,13 +187,17 @@ def analyze_mutations(reference, mutated):
         print(f"Classification: {classification.upper()}")
         print("-" * 40)
 
-if not is_valid_dna(reference_dna):
-    print("Error: Reference sequence contains invalid nucleotides.")
-elif not is_valid_dna(mutated_dna):
-    print("Error: Mutated sequence contains invalid nucleotides.")
-elif len(reference_dna) != len(mutated_dna):
-    analyze_indel(reference_dna, mutated_dna)
-elif len(reference_dna) % 3 != 0:
-    print("Error: DNA sequence length must be divisible by 3.")
-else:
-    analyze_mutations(reference_dna, mutated_dna)
+if __name__ == "__main__":
+    reference_dna = input("Enter reference DNA sequence: ").upper()
+    mutated_dna = input("Enter mutated DNA sequence: ").upper()
+
+    if not is_valid_dna(reference_dna):
+        print("Error: Reference sequence contains invalid nucleotides.")
+    elif not is_valid_dna(mutated_dna):
+        print("Error: Mutated sequence contains invalid nucleotides.")
+    elif len(reference_dna) != len(mutated_dna):
+        analyze_indel(reference_dna, mutated_dna)
+    elif len(reference_dna) % 3 != 0:
+        print("Error: DNA sequence length must be divisible by 3.")
+    else:
+        analyze_mutations(reference_dna, mutated_dna)
