@@ -3,6 +3,8 @@ from genetic_code import codon_table
 #valid dna sequence containing A, T, C and G only
 def is_valid_dna(sequence):
     valid_nucleotides = {"A", "T", "G", "C"}
+    if len(sequence) == 0:
+        return False
     return set(sequence).issubset(valid_nucleotides)
 
 #finding mutations
@@ -116,10 +118,12 @@ def analyze_mutations(reference, mutated):
         mutated_amino_acid = codon_table[mutated_codon]
 
         # classify the protein consequence
-        if mutated_amino_acid == "*":
-            classification = "nonsense"
-        elif reference_amino_acid == mutated_amino_acid:
+        if reference_amino_acid == mutated_amino_acid:
             classification = "synonymous"
+        elif mutated_amino_acid == "*":
+            classification = "nonsense"
+        elif reference_amino_acid == "*":
+            classification = "loss of stop codon"
         else:
             classification = "missense"
 
