@@ -21,9 +21,12 @@ def find_mutations(reference, mutated):
 #dna to codons to proteins
 def translate_dna(dna):
     protein = ""
-    for index in range(0, len(dna), 3):
+    for index in range(0, len(dna) - 2, 3):
         codon = dna[index:index + 3]
         amino_acid = codon_table[codon]
+        if amino_acid == "*":
+            protein = protein + amino_acid
+            break
         protein = protein + amino_acid
     return protein
 
@@ -67,6 +70,9 @@ def analyze_indel(reference, mutated):
     length_difference = abs(len(mutated) - len(reference))
     frame_effect = classify_length_change(reference, mutated)
 
+    reference_protein = translate_dna(reference)
+    mutated_protein = translate_dna(mutated)
+
     if indel_type == "insertion":
         changed_sequence = mutated[indel_index:indel_index + length_difference]
     else:
@@ -82,7 +88,8 @@ def analyze_indel(reference, mutated):
         print(f"Inserted nucleotide(s): {changed_sequence}")
     else:
         print(f"Deleted nucleotide(s): {changed_sequence}")
-
+    print(f"Reference protein: {reference_protein}")
+    print(f"Mutated protein: {mutated_protein}")
 
 # analyze mutations
 def analyze_mutations(reference, mutated):
@@ -153,6 +160,7 @@ def analyze_mutations(reference, mutated):
         print(f"\nDNA position(s): {', '.join(positions)}")
         print(f"Nucleotide change(s): {', '.join(nucleotide_changes)}")
         print(f"Codon change: {reference_codon} -> {mutated_codon}")
+        print(f"Amino acid position: {codon_number}")
         print(f"Amino acid change: {reference_amino_acid} -> {mutated_amino_acid}")
         print(f"Classification: {classification.upper()}")
         print("-" * 40)
