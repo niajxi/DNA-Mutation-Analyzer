@@ -1,3 +1,6 @@
+from Bio import Align
+
+##from alignment_test import coordinates
 from genetic_code import codon_table
 
 #valid dna sequence containing A, T, C and G only
@@ -61,11 +64,40 @@ def classify_indel(reference, mutated):
     else:
         return "no indel"
 
+#alignment based indel function
+def find_indel_with_alignment(reference, mutated):
+    aligner = Align.PairwiseAligner()
+    alignments = aligner.align(reference, mutated)
+
+    alignment = alignments[0]
+    coordinates = alignment.coordinates
+
+    for index in range(len(coordinates[0]) - 1):
+        reference_change = coordinates[0][index +1] - coordinates[0][index]
+        mutated_change = coordinates[1][index +1] - coordinates[1][index]
+
+        if reference_change > 0 and mutated_change == 0:
+            position = int(coordinates[0][index] + 1)
+
+            deleted_sequence = reference[
+                coordinates[0][index] : coordinates[0][index + 1]
+            ]
+            return "deletion", position, deleted_sequence
+
+        elif reference_change == 0 and mutated_change > 0:
+            position = int(coordinates[0][index] + 1)
+
+            inserted_sequence = mutated[
+                coordinates[1][index] : coordinates[1][index + 1]
+            ]
+            return "insertion", position, inserted_sequence
+
 #analyzing indel
 def analyze_indel(reference, mutated):
-    indel_type = classify_indel(reference, mutated)
-    indel_index = find_first_difference(reference, mutated)
-    position = indel_index + 1
+    indel_type, position, changed_sequence = find_indel_with_alignment(
+        reference,
+        mutated
+    )
 
     length_difference = abs(len(mutated) - len(reference))
     frame_effect = classify_length_change(reference, mutated)
@@ -75,11 +107,6 @@ def analyze_indel(reference, mutated):
 
     protein_difference_index = find_first_difference(reference_protein, mutated_protein)
     protein_difference_position = protein_difference_index + 1
-
-    if indel_type == "insertion":
-        changed_sequence = mutated[indel_index:indel_index + length_difference]
-    else:
-        changed_sequence = reference[indel_index:indel_index + length_difference]
 
     print("\nINDEL REPORT")
     print("=" * 40)
