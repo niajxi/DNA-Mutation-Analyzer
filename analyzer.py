@@ -55,15 +55,6 @@ def find_first_difference(reference, mutated):
 
     return shortest_length
 
-#distinguishing insertion vs deletion
-def classify_indel(reference, mutated):
-    if len(mutated) > len(reference):
-        return "insertion"
-    elif len(mutated) < len(reference):
-        return "deletion"
-    else:
-        return "no indel"
-
 #alignment based indel function
 def find_indel_with_alignment(reference, mutated):
     aligner = Align.PairwiseAligner()
