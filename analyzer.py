@@ -73,6 +73,9 @@ def analyze_indel(reference, mutated):
     reference_protein = translate_dna(reference)
     mutated_protein = translate_dna(mutated)
 
+    protein_difference_index = find_first_difference(reference_protein, mutated_protein)
+    protein_difference_position = protein_difference_index + 1
+
     if indel_type == "insertion":
         changed_sequence = mutated[indel_index:indel_index + length_difference]
     else:
@@ -90,6 +93,7 @@ def analyze_indel(reference, mutated):
         print(f"Deleted nucleotide(s): {changed_sequence}")
     print(f"Reference protein: {reference_protein}")
     print(f"Mutated protein: {mutated_protein}")
+    print(f"Protein divergence begins at amino acid: {protein_difference_position}")
 
 # analyze mutations
 def analyze_mutations(reference, mutated):
