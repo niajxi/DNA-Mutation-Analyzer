@@ -1,6 +1,4 @@
 from Bio import Align
-
-##from alignment_test import coordinates
 from genetic_code import codon_table
 
 #valid dna sequence containing A, T, C and G only
@@ -58,10 +56,16 @@ def find_first_difference(reference, mutated):
 #alignment based indel function
 def find_indel_with_alignment(reference, mutated):
     aligner = Align.PairwiseAligner()
+    aligner.mode = "global"
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -3
+    aligner.extend_gap_score = -0.5
     alignments = aligner.align(reference, mutated)
 
     alignment = alignments[0]
     coordinates = alignment.coordinates
+    indels = []
 
     for index in range(len(coordinates[0]) - 1):
         reference_change = coordinates[0][index +1] - coordinates[0][index]
@@ -73,7 +77,7 @@ def find_indel_with_alignment(reference, mutated):
             deleted_sequence = reference[
                 coordinates[0][index] : coordinates[0][index + 1]
             ]
-            return "deletion", position, deleted_sequence
+            indels.append(("deletion", position, deleted_sequence))
 
         elif reference_change == 0 and mutated_change > 0:
             position = int(coordinates[0][index] + 1)
@@ -81,17 +85,17 @@ def find_indel_with_alignment(reference, mutated):
             inserted_sequence = mutated[
                 coordinates[1][index] : coordinates[1][index + 1]
             ]
-            return "insertion", position, inserted_sequence
+            indels.append(("insertion", position, inserted_sequence))
+    return indels
 
 #analyzing indel
 def analyze_indel(reference, mutated):
-    indel_type, position, changed_sequence = find_indel_with_alignment(
-        reference,
-        mutated
-    )
+    indels = find_indel_with_alignment(reference, mutated)
 
     length_difference = abs(len(mutated) - len(reference))
     frame_effect = classify_length_change(reference, mutated)
+    if len(indels) > 1 and len(reference) == len(mutated):
+        frame_effect = "net reading frame restored"
 
     reference_protein = translate_dna(reference)
     mutated_protein = translate_dna(mutated)
@@ -101,14 +105,23 @@ def analyze_indel(reference, mutated):
 
     print("\nINDEL REPORT")
     print("=" * 40)
-    print(f"Type: {indel_type.upper()}")
-    print(f"Position: {position}")
-    print(f"Length change: {length_difference} nucleotide(s)")
-    print(f"Reading frame effect: {frame_effect.upper()}")
-    if indel_type == "insertion":
-        print(f"Inserted nucleotide(s): {changed_sequence}")
-    else:
-        print(f"Deleted nucleotide(s): {changed_sequence}")
+    for indel_type, position, changed_sequence in indels:
+        print(f"\nType: {indel_type.upper()}")
+        print(f"Position: {position}")
+        print(f"Length: {len(changed_sequence)} nucleotide(s)")
+        if len(changed_sequence) % 3 == 0:
+            individual_effect = "in-frame"
+        else:
+            individual_effect = "frameshift"
+        print(f"Individual reading frame effect: {individual_effect.upper()}")
+
+        if indel_type == "insertion":
+            print(f"Inserted nucleotide(s): {changed_sequence}")
+        else:
+            print(f"Deleted nucleotide(s): {changed_sequence}")
+
+        print("-" * 40)
+    print(f"Overall reading frame effect: {frame_effect.upper()}")
     print(f"Reference protein: {reference_protein}")
     print(f"Mutated protein: {mutated_protein}")
     print(f"Protein divergence begins at amino acid: {protein_difference_position}")
