@@ -1,11 +1,8 @@
 from Bio import Align
 
-from analyzer import find_indel_with_alignment
+from analyzer import analyze_all_variants
 
-reference = "ATGGCTAAACCG"
-mutated = "ATGACTAAACCG"
+reference = "ATGAAAGCTTTTCCCGGG"
+mutated = "ATGAAATGCTTTTCCGGA"
 
-indels = find_indel_with_alignment(reference, mutated)
-
-for indel_type, position, sequence in indels:
-    print(f"{indel_type.upper()} at position {position}: {sequence}")
+analyze_all_variants(reference, mutated)

@@ -88,6 +88,97 @@ def find_indel_with_alignment(reference, mutated):
             indels.append(("insertion", position, inserted_sequence))
     return indels
 
+#creates an alignment and prepares an empty list to store substitutions
+def find_substitutions_with_alignment(reference, mutated):
+    aligner = Align.PairwiseAligner()
+
+    aligner.mode = "global"
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -3
+    aligner.extend_gap_score = -0.5
+
+    alignment = aligner.align(reference, mutated) [0]
+    coordinates = alignment.coordinates
+    substitutions = []
+
+    for index in range(len(coordinates[0]) - 1):
+        ref_start = int(coordinates[0][index])
+        ref_end = int(coordinates[0][index + 1])
+
+        mut_start = int(coordinates[1][index])
+        mut_end = int(coordinates[1][index + 1])
+
+        if ref_end - ref_start == mut_end - mut_start:
+            for offset in range(ref_end - ref_start):
+                ref_position = ref_start + offset
+                mut_position = mut_start + offset
+
+                if reference[ref_position] != mutated[mut_position]:
+                    substitutions.append((
+                        ref_position + 1,
+                        reference[ref_position],
+                        mutated[mut_position]
+                    ))
+    return substitutions
+
+#combined variant detection
+def find_all_variants(reference, mutated):
+    aligner = Align.PairwiseAligner()
+
+    aligner.mode = "global"
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -3
+    aligner.extend_gap_score = -0.5
+
+    alignments = aligner.align(reference, mutated)
+    alignment = alignments[0]
+    coordinates = alignment.coordinates
+
+    substitutions = []
+    indels = []
+
+    for index in range(len(coordinates[0]) - 1):
+        ref_start = int(coordinates[0][index])
+        ref_end = int(coordinates[0][index + 1])
+
+        mut_start = int(coordinates[1][index])
+        mut_end = int(coordinates[1][index + 1])
+
+        if ref_end > ref_start and mut_end == mut_start:
+            deleted_sequence = reference[ref_start:ref_end]
+            indels.append(("deletion", ref_start + 1, deleted_sequence))
+        elif ref_end== ref_start and mut_end > mut_start:
+            inserted_sequence = mutated[mut_start:mut_end]
+            indels.append(("insertion", mut_start + 1, inserted_sequence))
+        else:
+            for offset in range(ref_end - ref_start):
+                ref_position = ref_start + offset
+                mut_position = mut_start + offset
+                if reference[ref_position] != mutated[mut_position]:
+                    substitutions.append((
+                        ref_position + 1,
+                        reference[ref_position],
+                        mutated[mut_position]
+                    ))
+    return substitutions, indels
+
+#combined variant report
+def analyze_all_variants(reference, mutated):
+    substitutions, indels = find_all_variants(reference, mutated)
+
+    print("\nCombined Variant Report")
+    print("=" * 40)
+
+    for position, ref_nucleotide, mut_nucleotide in substitutions:
+        print(f"\nSubstitution at Position: {position}")
+        print(f"Nucleotide change: {ref_nucleotide} -> {mut_nucleotide}")
+
+    for indel_type, position, sequence in indels:
+        print(f"\n{indel_type.upper()} at position {position}")
+        print(f"Nucleotide(s): {sequence}")
+
 #analyzing indel
 def analyze_indel(reference, mutated):
     indels = find_indel_with_alignment(reference, mutated)
