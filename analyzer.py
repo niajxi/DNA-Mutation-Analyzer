@@ -164,9 +164,27 @@ def find_all_variants(reference, mutated):
                     ))
     return substitutions, indels
 
+#substitution classification
+def classify_substitution(reference_amino_acid, mutated_amino_acid):
+    if reference_amino_acid == mutated_amino_acid:
+        return "synonymous"
+    elif mutated_amino_acid == ("*"):
+        return "nonsense"
+    elif reference_amino_acid == ("*"):
+        return "loss of stop codon"
+    else:
+        return "missense"
+
 #combined variant report
 def analyze_all_variants(reference, mutated):
     substitutions, indels = find_all_variants(reference, mutated)
+
+    reference_protein = translate_dna(reference)
+    mutated_protein = translate_dna(mutated)
+    protein_difference_index = find_first_difference(
+        reference_protein,
+        mutated_protein
+    )
 
     print("\nCombined Variant Report")
     print("=" * 40)
@@ -175,9 +193,36 @@ def analyze_all_variants(reference, mutated):
         print(f"\nSubstitution at Position: {position}")
         print(f"Nucleotide change: {ref_nucleotide} -> {mut_nucleotide}")
 
+        if not indels:
+            codon_index = (position - 1) // 3
+            codon_start = codon_index * 3
+            reference_codon = reference[codon_start:codon_start + 3]
+            mutated_codon = mutated[codon_start:codon_start + 3]
+
+            if len(reference_codon) == 3 and len(mutated_codon) == 3:
+                reference_amino_acid = codon_table[reference_codon]
+                mutated_amino_acid = codon_table[mutated_codon]
+
+                classification = classify_substitution(reference_amino_acid, mutated_amino_acid)
+
+                print(f"Codon change: {reference_codon} -> {mutated_codon}")
+                print(f"Amino acid position: {codon_index + 1}")
+                print(f"Amino acid change: {reference_amino_acid} -> {mutated_amino_acid}")
+                print(f"Classification: {classification.upper()}")
+
     for indel_type, position, sequence in indels:
         print(f"\n{indel_type.upper()} at position {position}")
         print(f"Nucleotide(s): {sequence}")
+
+    print("\n Protein Analysis")
+    print("=" * 40)
+    print(f"Reference Protein: {reference_protein}")
+    print(f"Mutated Protein: {mutated_protein}")
+
+    if reference_protein == mutated_protein:
+        print("Protein effect: No change detected")
+    else:
+        print(f"Protein divergence begins at amino acid: {protein_difference_index + 1}")
 
 #analyzing indel
 def analyze_indel(reference, mutated):
