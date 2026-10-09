@@ -179,6 +179,10 @@ def classify_substitution(reference_amino_acid, mutated_amino_acid):
 def analyze_all_variants(reference, mutated):
     substitutions, indels = find_all_variants(reference, mutated)
 
+    if not substitutions and not indels:
+        print("\nNo DNA variants detected.")
+        return
+
     reference_protein = translate_dna(reference)
     mutated_protein = translate_dna(mutated)
     protein_difference_index = find_first_difference(
@@ -214,7 +218,25 @@ def analyze_all_variants(reference, mutated):
         print(f"\n{indel_type.upper()} at position {position}")
         print(f"Nucleotide(s): {sequence}")
 
-    print("\n Protein Analysis")
+        if len(sequence) % 3 == 0:
+            classification = "IN FRAME"
+        else:
+            classification = "FRAMESHIFT"
+        print(f"Classification: {classification}")
+    if indels:
+        length_difference = len(mutated) - len(reference)
+        print("\nOverall Reading Frame Analysis:")
+        print("=" * 40)
+
+        if length_difference % 3 == 0:
+            if any(len(sequence) % 3 !=0 for _, _, sequence in indels):
+                print("Reading frame restored after multiple indels")
+            else:
+                print("Reading frame preserved")
+        else:
+            print("Net frameshift detected")
+
+    print("\nProtein Analysis")
     print("=" * 40)
     print(f"Reference Protein: {reference_protein}")
     print(f"Mutated Protein: {mutated_protein}")
