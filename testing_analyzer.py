@@ -87,3 +87,16 @@ def test_report_skips_disrupted_codon(capsys):
 
     assert "Reference Protein: MAKP" in output
     assert "Mutated Protein: MT*" in output
+
+def test_multiple_substitutions_same_codon(capsys):
+    reference = "ATGGCTAAACCG"
+    mutated = "ATGACAAAACCG"
+    analyze_all_variants(reference, mutated)
+    output = capsys.readouterr().out
+
+    assert "Substitution at Position: 4" in output
+    assert "Substitution at Position: 6" in output
+    assert "Codon change: GCT -> ACA" in output
+    assert "Amino acid change: A -> T" in output
+    assert output.count("Codon change: GCT -> ACA") == 1
+    assert output.count("Substitution at Position:") == 2
