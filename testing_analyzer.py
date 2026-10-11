@@ -100,3 +100,16 @@ def test_multiple_substitutions_same_codon(capsys):
     assert "Amino acid change: A -> T" in output
     assert output.count("Codon change: GCT -> ACA") == 1
     assert output.count("Substitution at Position:") == 2
+
+def test_substitution_after_frame_restoration(capsys):
+    reference = "ATGAAAGCTTTTCCCGGG"
+    mutated = "ATGAAATGCTTTTCCGGA"
+    analyze_all_variants(reference, mutated)
+    output = capsys.readouterr().out
+
+    assert "Substitution at Position: 18" in output
+    assert "Reading frame restored after multiple indels" in output
+    assert "Protein Analysis" in output
+    assert "Codon change: GGG -> GGA" in output
+    assert "Amino acid change: G -> G" in output
+    assert "Classification: SYNONYMOUS" in output

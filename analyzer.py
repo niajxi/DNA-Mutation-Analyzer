@@ -59,7 +59,7 @@ def find_all_variants(reference, mutated):
             indels.append(("deletion", ref_start + 1, deleted_sequence))
         elif ref_end== ref_start and mut_end > mut_start:
             inserted_sequence = mutated[mut_start:mut_end]
-            indels.append(("insertion", mut_start + 1, inserted_sequence))
+            indels.append(("insertion", ref_start + 1, inserted_sequence))
         else:
             for offset in range(ref_end - ref_start):
                 ref_position = ref_start + offset
