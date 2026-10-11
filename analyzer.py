@@ -186,6 +186,21 @@ def get_codon_at_position(dna, position):
         return None
     return codon
 
+#codon overlap check
+def indel_affects_codon(position, indels):
+    codon_start = ((position - 1) // 3) * 3 + 1
+    codon_end = codon_start + 2
+
+    for indel_type, indel_position, sequence in indels:
+        if indel_type == "insertion":
+            if codon_start < indel_position <= codon_end:
+                return True
+        elif indel_type == "deletion":
+            deletion_end = indel_position + len(sequence) - 1
+
+            if indel_position <= codon_end and deletion_end >= codon_start:
+                return True
+    return False
 
 #combined variant report
 def analyze_all_variants(reference, mutated):
@@ -209,13 +224,21 @@ def analyze_all_variants(reference, mutated):
         print(f"\nSubstitution at Position: {position}")
         print(f"Nucleotide change: {ref_nucleotide} -> {mut_nucleotide}")
 
-        if not indels or all(
-                ((position - 1) // 3 + 1) * 3 < indel_position
-                or (
-                    len(sequence) % 3 == 0
-                    and (indel_position - 1) % 3 == 0
+        if (
+            not indel_affects_codon(position, indels)
+            and (
+                not indels
+                or all(
+                     (
+                        ((position - 1) // 3 + 1) * 3 < indel_position
+                        or (
+                            len(sequence) % 3 == 0
+                            and (indel_position - 1) % 3 == 0
+                        )
+                    )
+                    for _, indel_position, sequence in indels
                 )
-                for _, indel_position, sequence in indels
+            )
         ):
             codon_index = (position - 1) // 3
             codon_start = codon_index * 3
