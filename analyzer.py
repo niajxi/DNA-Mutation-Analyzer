@@ -159,6 +159,7 @@ def find_all_variants(reference, mutated):
                 if reference[ref_position] != mutated[mut_position]:
                     substitutions.append((
                         ref_position + 1,
+                        mut_position + 1,
                         reference[ref_position],
                         mutated[mut_position]
                     ))
@@ -174,6 +175,17 @@ def classify_substitution(reference_amino_acid, mutated_amino_acid):
         return "loss of stop codon"
     else:
         return "missense"
+
+#locating codons
+def get_codon_at_position(dna, position):
+    codon_index = (position - 1) // 3
+    codon_start = codon_index * 3
+    codon = dna[codon_start:codon_start + 3]
+
+    if len(codon) != 3:
+        return None
+    return codon
+
 
 #combined variant report
 def analyze_all_variants(reference, mutated):
@@ -193,17 +205,24 @@ def analyze_all_variants(reference, mutated):
     print("\nCombined Variant Report")
     print("=" * 40)
 
-    for position, ref_nucleotide, mut_nucleotide in substitutions:
+    for position, mutated_position, ref_nucleotide, mut_nucleotide in substitutions:
         print(f"\nSubstitution at Position: {position}")
         print(f"Nucleotide change: {ref_nucleotide} -> {mut_nucleotide}")
 
-        if not indels:
+        if not indels or all(
+                ((position - 1) // 3 + 1) * 3 < indel_position
+                or (
+                    len(sequence) % 3 == 0
+                    and (indel_position - 1) % 3 == 0
+                )
+                for _, indel_position, sequence in indels
+        ):
             codon_index = (position - 1) // 3
             codon_start = codon_index * 3
-            reference_codon = reference[codon_start:codon_start + 3]
-            mutated_codon = mutated[codon_start:codon_start + 3]
+            reference_codon = get_codon_at_position(reference, position)
+            mutated_codon = get_codon_at_position(mutated, mutated_position)
 
-            if len(reference_codon) == 3 and len(mutated_codon) == 3:
+            if reference_codon is not None and mutated_codon is not None:
                 reference_amino_acid = codon_table[reference_codon]
                 mutated_amino_acid = codon_table[mutated_codon]
 
