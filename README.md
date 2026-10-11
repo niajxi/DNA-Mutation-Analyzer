@@ -23,8 +23,8 @@ To run the DNA Mutation Analyzer locally, Python 3.13 or a compatible version mu
 
 Clone the repository and navigate to the project directory:
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+git clone https://github.com/niajxi/DNA-Mutation-Analyzer.git
+cd DNA-Mutation-Analyzer
 ```
 
 ### 2. Create a virtual environment
