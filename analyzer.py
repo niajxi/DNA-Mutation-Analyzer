@@ -202,6 +202,39 @@ def indel_affects_codon(position, indels):
                 return True
     return False
 
+#alignment-based codon validation
+def codons_align_correctly(reference, mutated, position, mutated_position):
+    reference_start = ((position - 1) // 3) * 3
+    mutated_start = ((mutated_position - 1) // 3) * 3
+
+    if reference_start + 3 > len(reference):
+        return False
+
+    if mutated_start + 3 > len(mutated):
+        return False
+
+    aligner = Align.PairwiseAligner()
+    aligner.mode = "global"
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -3
+    aligner.extend_gap_score = -0.5
+
+    alignment = aligner.align(reference, mutated)[0]
+    aligned_positions = {}
+
+    for (ref_start, ref_end), (mut_start, mut_end) in zip(
+            alignment.aligned[0],
+            alignment.aligned[1]
+    ):
+        for offset in range(ref_end - ref_start):
+            aligned_positions[ref_start + offset] = mut_start + offset
+
+    for offset in range(3):
+        if aligned_positions.get(reference_start + offset) != mutated_start + offset:
+            return False
+    return True
+
 #combined variant report
 def analyze_all_variants(reference, mutated):
     substitutions, indels = find_all_variants(reference, mutated)
@@ -224,22 +257,8 @@ def analyze_all_variants(reference, mutated):
         print(f"\nSubstitution at Position: {position}")
         print(f"Nucleotide change: {ref_nucleotide} -> {mut_nucleotide}")
 
-        if (
-            not indel_affects_codon(position, indels)
-            and (
-                not indels
-                or all(
-                     (
-                        ((position - 1) // 3 + 1) * 3 < indel_position
-                        or (
-                            len(sequence) % 3 == 0
-                            and (indel_position - 1) % 3 == 0
-                        )
-                    )
-                    for _, indel_position, sequence in indels
-                )
-            )
-        ):
+        if codons_align_correctly(reference, mutated, position, mutated_position):
+
             codon_index = (position - 1) // 3
             codon_start = codon_index * 3
             reference_codon = get_codon_at_position(reference, position)
